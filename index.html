@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>48 Regalos Para Ti</title>
+
+<style>
+body{
+    margin:0;
+    font-family:'Georgia',serif;
+    background:linear-gradient(135deg,#fce4ec,#e3f2fd);
+    text-align:center;
+    overflow-x:hidden;
+}
+
+/* TITULO */
+h1{
+    margin-top:60px;
+    margin-bottom:50px;
+    color:#6a1b9a;
+    animation:fadeDown 1s ease;
+}
+
+.subtitulo{
+    display:block;
+    font-size:22px;
+    margin-top:15px;
+    font-weight:normal;
+    color:#8e24aa;
+}
+
+/* GRID */
+.container{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:45px;
+    padding:40px 20px;
+}
+
+.gift{
+    width:130px;
+    height:130px;
+    position:relative;
+    opacity:0;
+    transform:translateY(40px) scale(0.8);
+    animation:enterGift 0.8s forwards;
+}
+
+.gift.large{ width:130px; height:130px; }
+
+.gift img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+
+.number{
+    position:absolute;
+    bottom:5px;
+    right:6px;
+    background:rgba(0,0,0,0.6);
+    color:white;
+    font-size:12px;
+    padding:2px 6px;
+    border-radius:10px;
+}
+
+/* BOTONES */
+button{
+    padding:12px 30px;
+    border:none;
+    border-radius:25px;
+    background:#6a1b9a;
+    color:white;
+    cursor:pointer;
+    font-size:16px;
+    margin:20px;
+    transition:all 0.3s ease;
+}
+
+button:hover{
+    transform:scale(1.1);
+    box-shadow:0 5px 20px rgba(0,0,0,0.3);
+}
+
+/* VISTA INDIVIDUAL */
+.singleView{
+    display:none;
+    position:relative;
+    padding:30px 20px;
+}
+
+.singleTitle{
+    font-size:24px;
+    color:#6a1b9a;
+    margin-bottom:25px;
+    animation:fadeDown 0.8s ease;
+}
+
+.singleGift{
+    width:220px;
+    margin:auto;
+    animation:zoomIn 0.8s ease;
+    cursor:pointer;
+}
+
+.singleGift img{
+    width:100%;
+    transition:transform 0.4s;
+}
+
+.singleGift:hover img{
+    transform:scale(1.1) rotate(-5deg);
+}
+
+.contentBox{
+    margin-top:30px;
+    display:none;
+    max-width:700px;
+    margin:auto;
+    background:white;
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+    animation:fadeUp 0.8s ease;
+}
+
+.contentBox img{
+    max-width:100%;
+    border-radius:15px;
+}
+
+.exitBtn{
+    position:fixed;
+    top:20px;
+    left:20px;
+    background:#e91e63;
+    z-index:999;
+    border-radius:50px;
+    padding:8px 18px;
+    font-weight:bold;
+}
+
+.firma{
+    margin-top:60px;
+    padding:20px;
+    font-size:14px;
+    color:#6a1b9a;
+    opacity:0.8;
+}
+
+.firma strong{
+    font-weight:bold;
+}
+
+/* ANIMACIONES */
+.openAnimation{
+    animation:openGift 0.4s forwards;
+}
+
+@keyframes openGift{
+    from{ transform:scale(1); opacity:1; }
+    to{ transform:scale(0); opacity:0; }
+}
+
+@keyframes enterGift{
+    to{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+}
+
+@keyframes fadeDown{
+    from{opacity:0; transform:translateY(-30px);}
+    to{opacity:1; transform:translateY(0);}
+}
+
+@keyframes zoomIn{
+    from{transform:scale(0);}
+    to{transform:scale(1);}
+}
+
+@keyframes fadeUp{
+    from{opacity:0; transform:translateY(40px);}
+    to{opacity:1; transform:translateY(0);}
+}
+
+/* CONFETTI */
+.confetti{
+    position:fixed;
+    width:8px;
+    height:8px;
+    top:0;
+    animation:fall 3s linear forwards;
+}
+
+@keyframes fall{
+    to{
+        transform:translateY(100vh) rotate(720deg);
+        opacity:0;
+    }
+}
+
+@media(max-width:600px){
+    .singleGift{ width:170px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 🎵 Música de fondo -->
+<audio id="bgMusic" loop>
+    <source src="assets/audio/fondo.mp3" type="audio/mpeg">
+</audio>
+
+<div id="mainContent">
+
+<h1>
+    Feliz Cumpleaños Amiga y Hermana en Cristo 🎉<br>
+    <span class="subtitulo">48 Regalos Para Ti</span>
+</h1>
+
+<div class="container" id="grid"></div>
+<button id="startBtn">Comenzar</button>
+
+<div class="singleView" id="singleView">
+    <button class="exitBtn" onclick="exitExperience()">Salir</button>
+    <div class="singleTitle" id="singleTitle"></div>
+    <div class="singleGift" id="singleGift">
+        <img src="assets/images/regalo.png">
+    </div>
+    <div class="contentBox" id="contentBox"></div>
+    <button id="continueBtn" style="display:none;">Continuar</button>
+</div>
+
+</div>
+
+
+<script>
+
+let currentIndex = 0;
+let started = false;
+
+const bgMusic = document.getElementById("bgMusic");
+
+function fadeVolume(target, duration = 400){
+    const stepTime = 20;
+    const steps = duration / stepTime;
+    const start = bgMusic.volume;
+    const change = target - start;
+    let currentStep = 0;
+
+    const fade = setInterval(()=>{
+        currentStep++;
+        bgMusic.volume = start + (change * (currentStep/steps));
+        if(currentStep >= steps){
+            clearInterval(fade);
+            bgMusic.volume = target;
+        }
+    }, stepTime);
+}
+
+/* PERSONALIZA AQUÍ CADA REGALO */
+const giftsData = [
+    {type:"text", content:"El mundo sería muy triste sin ti 💖"},
+    {type:"text", content:"Toda tú eres hermosa, amiga mía; no tienes ningún defecto.\nCantares 4:7"},
+    {type:"audio", content:"assets/audio/mamita.mp3"},
+    {type:"text", content:"Gracias por tu espíritu lleno de amor y del gozo del Señor. "},
+    {type:"text", content:"Eres reflejo del amor de Dios donde quieras que vas."},
+    {type:"image", content:"assets/images/foto1.jpeg"},
+    {type:"image", content:"assets/images/foto2.jpeg"},
+    {type:"text", content:"Feliz cumpleaños pastora Johana."},
+    {type:"text", content:"Tu vida es un ejemplo de amor, y entrega"},
+    {type:"text", content:"Mujer llena de Sabiduría."},
+    {type:"text", content:"Tu vida inspira."},
+    {type:"text", content:"Eres refugio."},
+    {type:"text", content:"Eres amor."},
+    {type:"text", content:"Eres servicio."},
+    {type:"text", content:"Llenas el mundo de color y alegría."},
+    {type:"text", content:"Llena de gracia."},
+    {type:"text", content:"Colmada de sabiduría."},
+    {type:"text", content:"Eres increíble."},
+    {type:"text", content:"Creada por Dios para este tiempo."},
+    {type:"text", content:"Llena de pasión por las misiones."},
+    {type:"text", content:"Eres admirable."},
+    {type:"text", content:"Loable tu trabajo y entrega."},
+    {type:"audio", content:"assets/audio/noa.mp3"},
+    {type:"text", content:"Jehova te bendiga y te guarde, y ponga en ti paz.\nNúmeros 6:24-27."},
+    {type:"text", content:"Eres reflejo del amor de Dios donde quieras que vas.\nGracias por toda la alegria que traes a nuestras vidas."},
+    {type:"audio", content:"assets/audio/abuelita.mp3"},
+    {type:"text", content:"Es una bendición grande, conocerte.\nQue la mano del Señor, siga sobre ti."},
+    {type:"image", content:"assets/images/foto3.jpeg"},
+    {type:"text", content:"Que pases un precioso día de cumpleaños y que Dios te bendiga cada día más."},
+    {type:"text", content:"Que sean muchos más los años que vivas brillando para la gloria de Dios."},
+    {type:"audio", content:"assets/audio/dad.mp3"},
+    {type:"text", content:"Que este año, seas sorprendida con mucho más de la presencia de Dios en tu vida."},
+    {type:"text", content:"Que seas sostenida por la mano y el favor de Dios."},
+    {type:"text", content:"Que el Señor aumente tus fuerzas."},
+    {type:"text", content:"Que seas renovada."},
+    {type:"text", content:"Que el Señor fortalezca tu cuerpo y tu espíritu."},
+    {type:"image", content:"assets/images/foto4.jpeg"},
+    {type:"audio", content:"assets/audio/moshelle.mp3"},
+    {type:"text", content:"Que te conceda lo que tu corazón desea;\nque haga que se cumplan todos tus planes.\n(Salmo 20:4)"},
+    {type:"audio", content:"assets/audio/bella.mp3"},
+    {type:"text", content:"Ningún mal habrá de sobrevenirte,\nninguna calamidad llegará a tu hogar.\nPorque él ordenará que sus ángeles te cuiden en todos tus caminos.\nSalmos 91: 10-11"},
+    {type:"text", content:"Se reviste de fuerza y de honra,\ny no le preocupa lo que pueda venir.\nHabla siempre con sabiduría,\ny su lengua se rige por la ley del amor.\n(Proverbios 31:25-26)"},
+    {type:"text", content:"Muchas mujeres hacen el bien, pero tu sobrepasas a todas.\nProverbios 31:29."},
+    {type:"audio", content:"assets/audio/ruby.mp3"},
+    {type:"image", content:"assets/images/foto5.jpeg"},
+    {type:"text", content:"Jehova te bendiga y te guarde, y ponga en ti paz.\nNúmeros 6:24-27."},
+    {type:"image", content:"assets/images/foto6.jpeg"},
+    {type:"text", content:"Te amamos mucho pastora Johana, eres una mujer extraordinaria 🎉"},
+];
+
+/* COMPLETAR HASTA 48 */
+/*while(giftsData.length < 47){
+    giftsData.push({type:"text", content:"Eres una mujer extraordinaria ✨"});
+}*/
+
+
+
+const grid = document.getElementById("grid");
+const startBtn = document.getElementById("startBtn");
+const singleView = document.getElementById("singleView");
+const singleGift = document.getElementById("singleGift");
+const contentBox = document.getElementById("contentBox");
+const continueBtn = document.getElementById("continueBtn");
+const singleTitle = document.getElementById("singleTitle");
+
+/* CREAR GRID */
+for(let i=0;i<48;i++){
+    const gift = document.createElement("div");
+    gift.classList.add("gift");
+    //if(i===47) gift.classList.add("large");
+    gift.style.animationDelay = i*0.05+"s";
+
+    gift.innerHTML = `
+        <img src="assets/images/regalo.png">
+        <div class="number">${i+1}</div>
+    `;
+
+    grid.appendChild(gift);
+}
+
+/* COMENZAR */
+startBtn.onclick = ()=>{
+
+    const music = document.getElementById("bgMusic");
+    bgMusic.volume = 0.4;
+    bgMusic.play();
+
+    startBtn.style.transform="scale(0)";
+    grid.style.opacity="0";
+
+    setTimeout(()=>{
+        grid.style.display="none";
+        startBtn.style.display="none";
+        singleView.style.display="block";
+        started = true;
+        showGift();
+    },600);
+};
+
+/* MOSTRAR REGALO */
+function showGift(){
+    singleTitle.innerText = "Regalo " + (currentIndex+1);
+    contentBox.style.display="none";
+    contentBox.innerHTML="";
+    continueBtn.style.display="none";
+    singleGift.style.display="block";
+}
+
+/* ABRIR */
+singleGift.onclick = ()=>{
+    if(!started) return;
+
+    singleGift.classList.add("openAnimation");
+
+    setTimeout(()=>{
+        singleGift.style.display="none";
+        singleGift.classList.remove("openAnimation");
+        showContent();
+        launchConfetti();
+    },400);
+};
+
+function showContent(){
+
+    const data = giftsData[currentIndex];
+    contentBox.style.display="block";
+
+    // 🔥 Subimos volumen por defecto
+    fadeVolume(0.1);
+
+    if(data.type==="text"){
+        contentBox.innerHTML=`<h2>${data.content.replace(/\n/g, "<br>")}</h2>`;
+    }
+
+    if(data.type==="image"){
+        contentBox.innerHTML=`<img src="${data.content}">`;
+    }
+
+    if(data.type==="video"){
+        contentBox.innerHTML=`
+            <video width="100%" controls autoplay>
+                <source src="${data.content}" type="video/mp4">
+            </video>
+        `;
+    }
+
+    if(data.type==="audio"){
+        contentBox.innerHTML=`
+            <audio id="specialAudio" controls autoplay>
+                <source src="${data.content}" type="audio/mpeg">
+            </audio>
+        `;
+
+        // 🔻 Bajar música a 30%
+        fadeVolume(0.1);
+
+        const specialAudio = document.getElementById("specialAudio");
+
+        // 🔼 Cuando termine el audio vuelve a subir
+        specialAudio.addEventListener("ended", ()=>{
+            fadeVolume(0.1);
+        });
+
+        // 🔼 Si lo pausas también vuelve
+        specialAudio.addEventListener("pause", ()=>{
+            fadeVolume(0.1);
+        });
+    }
+
+    continueBtn.style.display="inline-block";
+}
+
+
+/* CONTINUAR */
+continueBtn.onclick = ()=>{
+    currentIndex++;
+    if(currentIndex>=giftsData.length){
+        exitExperience();
+        return;
+    }
+    showGift();
+};
+
+/* SALIR (sin detener música) */
+function exitExperience(){
+    singleView.style.display="none";
+    grid.style.display="flex";
+    grid.style.opacity="1";
+    startBtn.style.display="inline-block";
+    startBtn.style.transform="scale(1)";
+    currentIndex=0;
+    started=false;
+}
+
+/* CONFETTI */
+function launchConfetti(){
+    for(let i=0;i<100;i++){
+        const conf = document.createElement("div");
+        conf.classList.add("confetti");
+        conf.style.left = Math.random()*100+"vw";
+        conf.style.background = randomColor();
+        document.body.appendChild(conf);
+        setTimeout(()=>conf.remove(),3000);
+    }
+}
+
+function randomColor(){
+    const colors=["#ff0","#f0f","#0ff","#ff5722","#4caf50","#2196f3","#e91e63"];
+    return colors[Math.floor(Math.random()*colors.length)];
+}
+
+</script>
+</div>
+<footer class="firma">
+    Desarrollado con 💜 por Ruby Aguilar
+</footer>
+</body>
+</html>
