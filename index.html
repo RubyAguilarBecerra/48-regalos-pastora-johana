@@ -12,22 +12,33 @@ body{
     background:linear-gradient(135deg,#fce4ec,#e3f2fd);
     text-align:center;
     overflow-x:hidden;
+
+    display:flex;              /* 🔥 NUEVO */
+    flex-direction:column;     /* 🔥 NUEVO */
+    min-height:100vh;          /* 🔥 NUEVO */
+}
+
+#mainContent{
+    flex:1;
 }
 
 /* TITULO */
 h1{
-    margin-top:60px;
-    margin-bottom:50px;
+    margin-top: clamp(90px, 12vw, 140px);
+    margin-bottom: clamp(30px, 6vw, 60px);
     color:#6a1b9a;
-    animation:fadeDown 1s ease;
+    line-height:1.2;
+
+    font-size: clamp(24px, 5vw, 48px);
 }
 
 .subtitulo{
     display:block;
-    font-size:22px;
-    margin-top:15px;
+    margin-top: clamp(10px, 2vw, 20px);
     font-weight:normal;
     color:#8e24aa;
+
+    font-size: clamp(16px, 3.5vw, 26px);
 }
 
 /* GRID */
@@ -85,6 +96,19 @@ button:hover{
     box-shadow:0 5px 20px rgba(0,0,0,0.3);
 }
 
+.backBtn{
+    position:fixed;
+    top:20px;
+    left:20px;
+    background:#6a1b9a;
+    z-index:999;
+    border-radius:50%;
+    width:45px;
+    height:45px;
+    font-size:20px;
+    padding:0;
+}
+
 /* VISTA INDIVIDUAL */
 .singleView{
     display:none;
@@ -135,7 +159,7 @@ button:hover{
 .exitBtn{
     position:fixed;
     top:20px;
-    left:20px;
+    right:20px;
     background:#e91e63;
     z-index:999;
     border-radius:50px;
@@ -153,6 +177,39 @@ button:hover{
 
 .firma strong{
     font-weight:bold;
+}
+
+.modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.4);
+    backdrop-filter:blur(6px);
+    justify-content:center;
+    align-items:center;
+    z-index:2000;
+}
+
+.modalContent{
+    background:white;
+    padding:30px;
+    border-radius:20px;
+    max-width:400px;
+    width:90%;
+    box-shadow:0 20px 40px rgba(0,0,0,0.3);
+    animation:fadeUp 0.4s ease;
+}
+
+.modalContent h2{
+    color:#6a1b9a;
+    margin-bottom:10px;
+}
+
+.modalButtons{
+    margin-top:20px;
+    display:flex;
+    gap:15px;
+    justify-content:center;
 }
 
 /* ANIMACIONES */
@@ -206,6 +263,20 @@ button:hover{
 @media(max-width:600px){
     .singleGift{ width:170px; }
 }
+
+@media(max-width:600px){
+
+    h1{
+        margin-top:120px;  /* 🔥 baja el título */
+        font-size:26px;
+        padding:0 15px;
+    }
+
+    .subtitulo{
+        font-size:18px;
+    }
+
+}
 </style>
 </head>
 <body>
@@ -233,6 +304,7 @@ button:hover{
     </div>
     <div class="contentBox" id="contentBox"></div>
     <button id="continueBtn" style="display:none;">Continuar</button>
+    <button class="backBtn" id="backBtn">⬅</button>
 </div>
 
 </div>
@@ -327,7 +399,22 @@ const singleView = document.getElementById("singleView");
 const singleGift = document.getElementById("singleGift");
 const contentBox = document.getElementById("contentBox");
 const continueBtn = document.getElementById("continueBtn");
+const backBtn = document.getElementById("backBtn");
 const singleTitle = document.getElementById("singleTitle");
+
+
+backBtn.onclick = ()=>{
+
+    if(currentIndex === 0) return;
+
+    currentIndex--;
+
+    // 🔥 Guardamos nuevo progreso
+    localStorage.setItem("regaloActual", currentIndex);
+
+    showGift();
+};
+
 
 /* CREAR GRID */
 for(let i=0;i<48;i++){
@@ -347,21 +434,48 @@ for(let i=0;i<48;i++){
 /* COMENZAR */
 startBtn.onclick = ()=>{
 
-    const music = document.getElementById("bgMusic");
+    const savedProgress = localStorage.getItem("regaloActual");
+
+    if(savedProgress !== null){
+
+        const modal = document.getElementById("resumeModal");
+        const resumeText = document.getElementById("resumeText");
+        const resumeYes = document.getElementById("resumeYes");
+        const resumeNo = document.getElementById("resumeNo");
+
+        resumeText.innerText = "Te quedaste en el regalo " + (parseInt(savedProgress)+1);
+
+        modal.style.display = "flex";
+
+        resumeYes.onclick = ()=>{
+            currentIndex = parseInt(savedProgress);
+            modal.style.display = "none";
+            iniciarExperiencia();
+        };
+
+        resumeNo.onclick = ()=>{
+            localStorage.removeItem("regaloActual");
+            currentIndex = 0;
+            modal.style.display = "none";
+            iniciarExperiencia();
+        };
+
+        return;
+    }
+
+    iniciarExperiencia();
+};
+
+function iniciarExperiencia(){
     bgMusic.volume = 0.4;
     bgMusic.play();
 
-    startBtn.style.transform="scale(0)";
-    grid.style.opacity="0";
-
-    setTimeout(()=>{
-        grid.style.display="none";
-        startBtn.style.display="none";
-        singleView.style.display="block";
-        started = true;
-        showGift();
-    },600);
-};
+    grid.style.display="none";
+    startBtn.style.display="none";
+    singleView.style.display="block";
+    started = true;
+    showGift();
+}
 
 /* MOSTRAR REGALO */
 function showGift(){
@@ -370,6 +484,12 @@ function showGift(){
     contentBox.innerHTML="";
     continueBtn.style.display="none";
     singleGift.style.display="block";
+
+    if(currentIndex === 0){
+        backBtn.style.display = "none";
+    }else{
+        backBtn.style.display = "inline-block";
+    }
 }
 
 /* ABRIR */
@@ -391,8 +511,8 @@ function showContent(){
     const data = giftsData[currentIndex];
     contentBox.style.display="block";
 
-    // 🔥 Subimos volumen por defecto
-    fadeVolume(0.1);
+    // 🔊 Volumen normal cuando NO es audio
+    fadeVolume(0.4);
 
     if(data.type==="text"){
         contentBox.innerHTML=`<h2>${data.content.replace(/\n/g, "<br>")}</h2>`;
@@ -411,25 +531,26 @@ function showContent(){
     }
 
     if(data.type==="audio"){
-        contentBox.innerHTML=`
+
+        contentBox.innerHTML = `
             <audio id="specialAudio" controls autoplay>
                 <source src="${data.content}" type="audio/mpeg">
             </audio>
         `;
 
-        // 🔻 Bajar música a 30%
-        fadeVolume(0.1);
-
         const specialAudio = document.getElementById("specialAudio");
 
-        // 🔼 Cuando termine el audio vuelve a subir
+        specialAudio.volume = 1.0;
+
+        // 🔻 Bajamos fondo SOLO cuando es audio
+        fadeVolume(0.08);
+
         specialAudio.addEventListener("ended", ()=>{
-            fadeVolume(0.1);
+            fadeVolume(0.4);
         });
 
-        // 🔼 Si lo pausas también vuelve
         specialAudio.addEventListener("pause", ()=>{
-            fadeVolume(0.1);
+            fadeVolume(0.4);
         });
     }
 
@@ -440,15 +561,26 @@ function showContent(){
 /* CONTINUAR */
 continueBtn.onclick = ()=>{
     currentIndex++;
+
+    // 🔥 Guardamos progreso
+    localStorage.setItem("regaloActual", currentIndex);
+
     if(currentIndex>=giftsData.length){
+        localStorage.removeItem("regaloActual");
         exitExperience();
         return;
     }
+
     showGift();
 };
 
 /* SALIR (sin detener música) */
 function exitExperience(){
+
+    // 🛑 Detener música
+    bgMusic.pause();
+    bgMusic.currentTime = 0;   // vuelve al inicio
+
     singleView.style.display="none";
     grid.style.display="flex";
     grid.style.opacity="1";
@@ -456,6 +588,13 @@ function exitExperience(){
     startBtn.style.transform="scale(1)";
     currentIndex=0;
     started=false;
+    
+    if(currentIndex>=giftsData.length){
+    localStorage.removeItem("regaloActual");
+    exitExperience();
+    return;
+}
+
 }
 
 /* CONFETTI */
@@ -476,6 +615,17 @@ function randomColor(){
 }
 
 </script>
+</div>
+
+<div id="resumeModal" class="modal">
+    <div class="modalContent">
+        <h2>¿Deseas continuar donde quedaste?</h2>
+        <p id="resumeText"></p>
+        <div class="modalButtons">
+            <button id="resumeYes">Continuar</button>
+            <button id="resumeNo">Empezar de nuevo</button>
+        </div>
+    </div>
 </div>
 <footer class="firma">
     Desarrollado con 💜 por Ruby Aguilar
